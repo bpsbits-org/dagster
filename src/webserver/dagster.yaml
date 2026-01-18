@@ -1,0 +1,52 @@
+run_storage:
+  module: dagster_postgres.run_storage
+  class: PostgresRunStorage
+  config:
+    postgres_db:
+      hostname: { env: DGS_PG_SRV }
+      username: { env: DGS_PG_USR }
+      password: { env: DGS_PG_PSW }
+      db_name: { env: DGS_PG_DBN }
+      port: { env: DGS_PG_PRT }
+      params:
+        options: "-c search_path=dagster"
+
+event_log_storage:
+  module: dagster_postgres.event_log
+  class: PostgresEventLogStorage
+  config:
+    postgres_db:
+      hostname: { env: DGS_PG_SRV }
+      username: { env: DGS_PG_USR }
+      password: { env: DGS_PG_PSW }
+      db_name: { env: DGS_PG_DBN }
+      port: { env: DGS_PG_PRT }
+      params:
+        options: "-c search_path=dagster"
+
+schedule_storage:
+  module: dagster_postgres.schedule_storage
+  class: PostgresScheduleStorage
+  config:
+    postgres_db:
+      hostname: { env: DGS_PG_SRV }
+      username: { env: DGS_PG_USR }
+      password: { env: DGS_PG_PSW }
+      db_name: { env: DGS_PG_DBN }
+      port: { env: DGS_PG_PRT }
+      params:
+        options: "-c search_path=dagster"
+
+run_coordinator:
+  module: dagster.core.run_coordinator
+  class: QueuedRunCoordinator
+
+run_launcher:
+  module: dagster.core.launcher
+  class: DefaultRunLauncher
+
+telemetry:
+  enabled: false
+
+code_servers:
+  local_startup_timeout: 60

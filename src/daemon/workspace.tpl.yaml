@@ -1,0 +1,7 @@
+# Configuration (Daemon)
+load_from:
+  - grpc_server:
+      host: ${DGS_CODE_HOST}
+      port: ${DGS_CODE_PORT}
+      location_name: ${DGS_CODE_LOCATION_NAME}
+# end
