@@ -2,7 +2,7 @@
 
 This project contains the source code for three main **container images** that work together to run **[Dagster](https://github.com/dagster-io/dagster)** — a popular tool that helps teams build, run, schedule, and monitor data pipelines (think of it as a very smart task manager for data work).
 
-You can use this project as a **boilerplate** for building your own Dagster-based solution,  or you can simply use the pre-built (already compiled) Docker images (based on this project) to run Dagster quickly and extend it with your own custom functionality.
+You can use this project as a **boilerplate** for building your own Dagster-based solution,  **or you can simply use the pre-built (already compiled) container images** (based on this project) to run Dagster quickly and extend it with your own custom functionality.
 
 This project's code is built with **Podman** in mind,  but you can easily switch to **Docker** by making the necessary adjustments to the related configuration and commands. However, based on our practical experience, Podman is generally easier to use and requires fewer system resources than Docker on both Linux and macOS.
 
@@ -17,6 +17,20 @@ We made the deployment simpler, safer, and more flexible by dividing Dagster int
 - `webserver`.
 
 This type of structure has proven very practical in real projects — both for small teams and larger organisations.
+
+## Pre-built Dagster container images
+
+You can use pre-built Dagster container images for any purpose, ranging from testing and learning to intensive development and production environments.
+
+For available images, please refer to the repository:
+
+- [https://quay.io/repository/bpsbits/dagster?tab=tags](https://quay.io/repository/bpsbits/dagster?tab=tags&referrer=grok.com)
+
+Available images:
+
+- `daemon`
+- `webserver`
+- `pipes`
 
 ### Why did we do this?
 
