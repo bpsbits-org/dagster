@@ -7,6 +7,7 @@ This folder contains miscellaneous development scripts, primarily used for build
 | ------------------ | ---------------------------- | ------------------------------------------------------------ |
 | **Database**       |                              |                                                              |
 |                    | `create.server.db.sh`        | Creates and starts a local database server instance          |
+|                    | `sql/tpl.dagster.sql`        | Template SQL script for setting up the Dagster database schema and initial configuration. |
 | **Dagster Images** |                              |                                                              |
 |                    | `build.images.all.sh`        | Builds all required Dagster-related container images         |
 | **Dagster Server** |                              |                                                              |

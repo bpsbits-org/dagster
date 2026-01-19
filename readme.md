@@ -48,3 +48,10 @@ It's completely up to you how you deploy your user code. There is no single "per
 
 Choose whichever fits your workflow and security needs best.
 
+## Help / Documentation
+
+See the [.docs/](./docs/) folder for more information and guidelines.
+
+
+
+✦ ✦ ✦
