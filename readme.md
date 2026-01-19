@@ -1,6 +1,6 @@
 # Dagster Boilerplate
 
-This project contains the source code for three main **container images** that work together to run **Dagster** — a popular tool that helps teams build, run, schedule, and monitor data pipelines (think of it as a very smart task manager for data work).
+This project contains the source code for three main **container images** that work together to run **[Dagster](https://github.com/dagster-io/dagster)** — a popular tool that helps teams build, run, schedule, and monitor data pipelines (think of it as a very smart task manager for data work).
 
 You can use this project as a **boilerplate** for building your own Dagster-based solution,  or you can simply use the pre-built (already compiled) Docker images (based on this project) to run Dagster quickly and extend it with your own custom functionality.
 
@@ -50,7 +50,7 @@ Choose whichever fits your workflow and security needs best.
 
 ## Help / Documentation
 
-See the [.docs/](./docs/) folder for more information and guidelines.
+See the [.docs](./docs/) folder for more information and guidelines.
 
 
 
