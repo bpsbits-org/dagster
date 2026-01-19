@@ -1,0 +1,17 @@
+# IDE's
+/.idea/*
+!/.idea/runConfigurations
+!/.idea/runConfigurations/*
+!/.idea/httpRequests
+!/.idea/httpRequests/*
+/.vscode
+
+# Project spceific
+/.podman.secrets.sh
+/.storage-conf.yaml
+.venv/
+.scripts/
+_scripts/tmp.sh
+
+# General
+.DS_Store
