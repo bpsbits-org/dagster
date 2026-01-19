@@ -1,4 +1,4 @@
-# Dagster Boilerplate
+# Dagster Boilerplate / Launchpad
 
 This project contains the source code for three main **container images** that work together to run **[Dagster](https://github.com/dagster-io/dagster)** — a popular tool that helps teams build, run, schedule, and monitor data pipelines (think of it as a very smart task manager for data work).
 
@@ -32,7 +32,7 @@ Available images:
 - `webserver`
 - `pipes`
 
-### Why did we do this?
+## Why did we do this?
 
 Instead of putting everything into one big, complicated container, we separated the different responsibilities of Dagster into **three clear parts**. This three-image architecture makes Dagster more flexible, faster to update, safer to operate, and much easier to manage — especially in real-world projects that run for months or years across multiple environments (DevOps).
 
@@ -49,6 +49,22 @@ Think of it like organising a small team instead of asking one person to do ever
 - Different teams can work on different parts at the same time (data engineers on pipes, platform team on daemon/webserver).
 - Much simpler to manage **different versions** in development, staging, and production.
 - Fewer surprises when something changes — problems stay more contained.
+
+## When to use Launchpad
+
+This [repository](https://quay.io/repository/bpsbits/dagster?tab=tags&referrer=grok.com) provides pre-built images (hosted on quay.io) for near-instantaneous startup. Use these if you aim to minimize the overhead (tax) of learning, development, and deployment.
+
+- **Bootstrap Speed:** Building Dagster images from scratch can take time and effort because of heavy Python dependencies (Pandas, SQLAlchemy, etc.). Using their pre-built images reduces this to seconds.
+- **Compatibility:** They have already solved the "version hell" between the Dagster core version and the library dependencies
+- **Zero-Config Security:** Often, these images come with pre-configured health checks and non-root users, which are security best practices that developers often skip when building their own.
+
+## When to use Boilerplate?
+
+While pre-built images are highly useful, consider customizing or extending the boilerplate in these scenarios:
+
+1. **Private Dependencies:** You need to install private Python packages from a secure registry.
+2. **OS-level Binaries:** Your pipelines require specific Linux drivers (e.g., for GPU processing or specialized database drivers like Oracle/MS SQL).
+3. **Strict Compliance:** Your organization requires all images to be scanned and built from a specific internal base image (like a hardened Alpine or RedHat UBI image).
 
 ## Two ways to deploy your code:
 
