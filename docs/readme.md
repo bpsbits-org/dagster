@@ -4,4 +4,8 @@ This folder has a bunch of helpful tips, guidelines, and random useful stuff to 
 
 - [Launchpad](./launchpad.md) - How to use pre-built Dagster container images.
 - [Boilerplate](boilerplate.md) - How to customize or extend the current project for custom builds. 
+- [Database for Dagster](./pg-server.md) - How to set up a PostgreSQL server, database, schema, and configuration for Dagster.
 
+✦ ✦ ✦
+
+Will be updated...

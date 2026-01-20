@@ -31,6 +31,8 @@ Use these pre-built images if you aim to minimize the overhead (tax) of learning
 * **Compatibility:** They have already solved the "version hell" between the Dagster core version and library dependencies.
 * **Zero-Config Security:** Often, these images come with pre-configured health checks and non-root users, which are security best practices that developers often skip when building their own.
 
+Read more: [Launchpad documentation](./docs/launchpad.md).
+
 ## 🏗 About the Solution
 **We have not altered Dagster itself** — we are using the **official Dagster version unchanged**. We only packaged it into separate, easy-to-maintain Docker containers.
 
@@ -69,6 +71,8 @@ While pre-built images are highly useful, consider customizing or extending the 
 1. **Private Dependencies:** You need to install private Python packages from a secure registry.
 2. **OS-level Binaries:** Your pipelines require specific Linux drivers (e.g., for GPU processing or specialized database drivers like Oracle/MS SQL).
 3. **Strict Compliance:** Your organization requires all images to be scanned and built from a specific internal base image (like a hardened Alpine or RedHat UBI image).
+
+Read more: [Boilerplate documentation](docs/boilerplate.md).
 
 ## 🚢 Two Ways to Deploy Your Code
 It's completely up to you how you deploy your user code; the best choice depends on your specific use case.
