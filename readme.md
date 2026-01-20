@@ -8,6 +8,7 @@ You can use this project as a **boilerplate** for building your own Dagster-base
 This project's code is built with **Podman** in mind, but you can easily switch to **Docker** by making the necessary adjustments to the related configuration and commands. Based on our practical experience, Podman is generally easier to use and requires fewer system resources than Docker on both Linux and macOS.
 
 ## 📦 Pre-built Dagster Images (Launchpad)
+
 You can use pre-built Dagster container images for any purpose, ranging from testing and learning to intensive development and production environments. These images are hosted on quay.io for near-instantaneous startup.
 
 **Repository Link:** [https://quay.io/repository/bpsbits/dagster?tab=tags](https://quay.io/repository/bpsbits/dagster?tab=tags&referrer=grok.com)
@@ -17,7 +18,8 @@ You can use pre-built Dagster container images for any purpose, ranging from tes
 * `webserver`
 * `pipes`
 
-### Why use the Launchpad?
+### 🚀 Why use the Launchpad?
+
 Use these pre-built images if you aim to minimize the overhead (tax) of learning, development, and deployment:
 * **Bootstrap Speed:** Building Dagster images from scratch can take time because of heavy Python dependencies; these images reduce that time to seconds.
 * **Compatibility:** They have already solved the "version hell" between the Dagster core version and library dependencies.
@@ -29,18 +31,34 @@ Use these pre-built images if you aim to minimize the overhead (tax) of learning
 Instead of putting everything into one big, complicated monolith, we separated Dagster into three logical, independent parts. This structure makes it more flexible, faster to update, safer to manage across multiple environments (DevOps).
 
 Think of it like organizing a small team instead of asking one person to do everything:
-* **webserver** → the nice dashboard everyone looks at in the browser.
-* **daemon** → the quiet background worker that automatically runs scheduled tasks.
-* **pipes** → your actual data pipelines (the real work you care about most).
+* **[webserver](./src/webserver)** → the nice Dagster dashboard everyone looks at in the browser.
+* **[daemon](src/daemon)** → the quiet Dagster background worker that automatically runs scheduled tasks.
+* **[pipes](./src/pipes)** → your actual Dagster data pipelines (the real work you care about most).
 
-### Core Benefits
+### 🍎 Core Benefits
+
 * Much easier to **update** only the part you changed (especially your data pipelines in **pipes**).
 * You can **upgrade** or **restart** one piece without stopping the whole system.
 * Different teams can work on different parts simultaneously.
 * Simpler to manage **different versions** in development, staging, and production.
 * Problems stay more contained with fewer surprises when something changes.
 
+### 📂 Project Structure
+
+This repository uses a clean, purpose-driven layout designed to keep your infrastructure, documentation, and automation separated and organized.
+
+```
+.
+├── src/                    # The heart of the project: all main source code
+│   ├── daemon/             # Logic and config for the background worker
+│   ├── pipes/              # Your actual data pipelines (User Code)
+│   └── webserver/          # Logic and UI settings for the Dagster dashboard
+├── docs/                   # Extended guides, diagrams, and references
+└── _scripts/               # Automation, build, and deployment utility tools
+```
+
 ## 🛠 Customization (Boilerplate)
+
 While pre-built images are highly useful, consider customizing or extending the boilerplate in these scenarios:
 1. **Private Dependencies:** You need to install private Python packages from a secure registry.
 2. **OS-level Binaries:** Your pipelines require specific Linux drivers (e.g., for GPU processing or specialized database drivers like Oracle/MS SQL).
