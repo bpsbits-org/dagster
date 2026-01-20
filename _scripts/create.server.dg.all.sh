@@ -35,6 +35,14 @@ DG_IMG_WEB="localhost/${CN_WS_NAME}:${CN_WS_TAG}"
 
 echo "Project directory: ${D_PRJ_ALL}"
 
+if [ -f "${D_PRJ_ALL}/.podman.secrets.sh" ]; then
+    source "${D_PRJ_ALL}/.podman.secrets.sh" # You need to create this file first
+else
+    make_podman_secrets() {
+        echo "The .podman.secrets.sh is not set."
+    }
+fi
+
 create_dg_servers() {
     local srv_web_port srv_pip_port
     srv_web_port=$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dgs_ws_prt)
@@ -51,6 +59,7 @@ start_dg_servers() {
 }
 
 create_and_start() {
+    make_podman_secrets
     create_dg_servers
     start_dg_servers
 }

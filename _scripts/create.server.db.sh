@@ -12,7 +12,13 @@ VOL_PG_DB='vol_dagster_db'
 readonly F_CREATE_DB D_CREATE_DB D_PRJ_DB CNT_PG_DB
 
 source "${D_CREATE_DB}/fn.podman.sh"
-source "${D_PRJ_DB}/.podman.secrets.sh" # You need to create this file first
+if [ -f "${D_PRJ_DB}/.podman.secrets.sh" ]; then
+    source "${D_PRJ_DB}/.podman.secrets.sh" # You need to create this file first
+else
+    make_podman_secrets() {
+        echo "The .podman.secrets.sh is not set."
+    }
+fi
 
 # Checks if dagster db already exists
 dagster_db_exists() {
