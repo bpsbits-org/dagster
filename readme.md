@@ -1,11 +1,17 @@
 # Dagster Boilerplate / Launchpad
 
+This repository serves as a "Foundation-as-Code" project, providing a standardized framework for building, testing, and deploying [Dagster](https://github.com/dagster-io/dagster)) based data pipelines across an organization at every stage—from development to production. This approach ensures consistency, scalability, and efficiency, reducing errors and accelerating time-to-value for data-driven initiatives.
+
 ## 🚀 Sneak Peek & Key Value
 This project contains the source code for three main **container images** that work together to run **[Dagster](https://github.com/dagster-io/dagster)** — a popular tool that helps teams build, run, schedule, and monitor data pipelines (think of it as a very smart task manager for data work).
 
 You can use this project as a **boilerplate** for building your own Dagster-based solution, **or you can simply use the pre-built (already compiled) container images** (based on this project) to run Dagster quickly and extend it with your own custom functionality.
 
 This project's code is built with **Podman** in mind, but you can easily switch to **Docker** by making the necessary adjustments to the related configuration and commands. Based on our practical experience, Podman is generally easier to use and requires fewer system resources than Docker on both Linux and macOS.
+
+Instead of containing specific scripts for moving data, it provides a unified infrastructure layer for containerized environments—for isolation, automated CI/CD "guardrails" (GitHub Actions, etc.), and pre-defined Dagster Resources for quick startup.
+
+This "foundation" approach allows developers to "plug in" their specific data logic into a stable, production-ready system. By separating the technical platform from the business logic, the repository ensures that all data tasks follow the same elite engineering standards regardless of who writes them.
 
 ## 📦 Pre-built Dagster Images (Launchpad)
 
