@@ -1,6 +1,6 @@
 # Dagster Boilerplate / Launchpad
 
-This repository serves as a "Foundation-as-Code" project, providing a standardized framework for building, testing, and deploying [Dagster](https://github.com/dagster-io/dagster)) based data pipelines across an organization at every stage—from development to production. This approach ensures consistency, scalability, and efficiency, reducing errors and accelerating time-to-value for data-driven initiatives.
+This repository serves as a "Foundation-as-Code" project, providing a standardized framework for building, testing, and deploying [Dagster](https://github.com/dagster-io/dagster) based data pipelines across an organization at every stage—from development to production. This approach ensures consistency, scalability, and efficiency, reducing errors and accelerating time-to-value for data-driven initiatives.
 
 ## 🚀 Sneak Peek & Key Value
 This project contains the source code for three main **container images** that work together to run **[Dagster](https://github.com/dagster-io/dagster)** — a popular tool that helps teams build, run, schedule, and monitor data pipelines (think of it as a very smart task manager for data work).
@@ -37,6 +37,8 @@ Read more: [Launchpad documentation](./docs/launchpad.md).
 **We have not altered Dagster itself** — we are using the **official Dagster version unchanged**. We only packaged it into separate, easy-to-maintain Docker containers.
 
 Instead of putting everything into one big, complicated monolith, we separated Dagster into three logical, independent parts. This structure makes it more flexible, faster to update, safer to manage across multiple environments (DevOps).
+
+It enforces the "Separation of Concerns" that reduces infrastructure failures. It provides a blueprint that respects the lifecycle of data engineering, where deployments are frequent and infrastructure stability is non-negotiable.
 
 Think of it like organizing a small team instead of asking one person to do everything:
 * **[webserver](./src/webserver)** → the nice Dagster dashboard everyone looks at in the browser.
