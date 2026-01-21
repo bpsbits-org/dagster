@@ -2,6 +2,10 @@
 
 This solution serves as a "Foundation-as-Code," providing a standardized framework for building, testing, and deploying [Dagster](https://github.com/dagster-io/dagster)-based data pipelines throughout an organization at every stage. This approach ensures consistency, scalability, and efficiency while reducing errors and accelerating time-to-value for data-driven initiatives
 
+🚀 We offer a single-line demo **installer**; see **[Quick Launch](#-quick-launch)**.
+
+---
+
 ## 🤔 What Problem Does This Solve?
 
 Standard Dagster documentation focuses on **concepts and code**, not **infrastructure and operations**. This leaves you asking:
