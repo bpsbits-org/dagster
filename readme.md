@@ -127,6 +127,8 @@ This repository uses a clean, purpose-driven layout designed to keep your infras
 
 This project's code is written with **Podman** in mind (*rootless*), but you can easily switch to **Docker** by making the necessary adjustments to the related configuration and commands. Based on our practical experience, Podman is generally easier to use and requires fewer system resources than Docker on both Linux and macOS.
 
+---
+
 ## 📦 The Launchpad
 
 You can use pre-built Dagster container images for any purpose, ranging from testing and learning to intensive development and production environments. These images are hosted on quay.io for near-instantaneous startup.
@@ -171,6 +173,8 @@ While pre-built images are highly useful, consider customizing or extending the 
 
 [Read Boilerplate documentation →](./docs/boilerplate.md)
 
+---
+
 ## 🚢 Shipping Pipes - Two Ways to Deploy Your Code
 
 It's completely up to you how you deploy your user code; the best choice depends on your specific use case.
@@ -181,6 +185,8 @@ It's completely up to you how you deploy your user code; the best choice depends
 2. **Using a mounted volume**
    * Deploy the pipes container once and mount your code directory (from shared or cloud storage) as a volume.
    * Code updates are available without rebuilding the image, making it convenient for easy updates.
+
+---
 
 ## 📚 Help / Documentation
 
