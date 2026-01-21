@@ -24,7 +24,7 @@ You can use pre-built Dagster container images for any purpose, ranging from tes
 * `webserver`
 * `pipes`
 
-### 🚀 Why use the Launchpad?
+### Why use the Launchpad?
 
 Use these pre-built images if you aim to minimize the overhead (tax) of learning, development, and deployment:
 * **Bootstrap Speed:** Building Dagster images from scratch can take time because of heavy Python dependencies; these images reduce that time to seconds.
@@ -32,6 +32,23 @@ Use these pre-built images if you aim to minimize the overhead (tax) of learning
 * **Zero-Config Security:** Often, these images come with pre-configured health checks and non-root users, which are security best practices that developers often skip when building their own.
 
 Read more: [Launchpad documentation](./docs/launchpad.md).
+
+### 🚀 Quick Launch
+
+Quick way to test the Launchpad right now:
+
+```shell
+curl -sSL https://raw.githubusercontent.com/bpsbits-org/dagster/main/_scripts/launchpad/run.sh | bash
+```
+
+**What it does:**
+
+- Downloads & runs the installer → clones the repo → sets up the Dagster Launchpad demo.
+
+**Needs:**
+
+- `git`
+- `podman` (install via [Podman Desktop](https://podman-desktop.io/) if missing)
 
 ## 🏗 About the Solution
 **We have not altered Dagster itself** — we are using the **official Dagster version unchanged**. We only packaged it into separate, easy-to-maintain Docker containers.
