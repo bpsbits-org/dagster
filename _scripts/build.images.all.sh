@@ -5,8 +5,7 @@
 set -e
 
 # Locations
-F_BUILD_ALL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
-D_BUILD_ALL=$(dirname "${F_BUILD_ALL}")
+D_BUILD_ALL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 D_PRJ_ALL=$(realpath "${D_BUILD_ALL}/../")
 
 # Daemon

@@ -74,7 +74,5 @@ podman_s_save() {
     if ! podman_s_exists "$name"; then
         echo "Creating secret '$name'..."
         printf '%s' "$value" | podman secret create "$name" -
-    else
-        echo "Skipping '$name', already exists."
     fi
 }

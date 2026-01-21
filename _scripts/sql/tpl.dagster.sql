@@ -71,4 +71,4 @@ comment on function sch_dagster.set_user_conf
 
 alter function sch_dagster.set_user_conf(varchar, jsonb) owner to postgres;
 
-grant execute on function sch_dagster.set_user_conf(varchar, jsonb) to dbu_dagster;
+grant execute on function sch_dagster.set_user_conf(varchar, jsonb) to usr_dagster;

@@ -5,8 +5,7 @@
 set -e
 
 # Locations
-F_CREATE_ALL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
-D_CREATE_ALL=$(dirname "${F_CREATE_ALL}")
+D_CREATE_ALL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 D_PRJ_ALL=$(realpath "${D_CREATE_ALL}/../")
 
 cd "${D_PRJ_ALL}" || exit 1
@@ -59,6 +58,7 @@ start_dg_servers() {
 }
 
 create_and_start() {
+    unset DGS_SEC_PRX
     make_podman_secrets
     create_dg_servers
     start_dg_servers
@@ -73,5 +73,13 @@ chek_env_vars() {
     podman exec "${DG_SRV_WEB}" env | sort
 }
 
+open_dgs_ui() {
+    local srv_web_port
+    srv_web_port=$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dgs_ws_prt)
+    sleep 1
+    open_dagster_ui "${srv_web_port}"
+}
+
 create_and_start
 chek_env_vars
+open_dgs_ui

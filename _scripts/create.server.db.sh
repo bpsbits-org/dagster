@@ -4,38 +4,40 @@
 set -e
 
 # Locations
-F_CREATE_DB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
-D_CREATE_DB=$(dirname "${F_CREATE_DB}")
+D_CREATE_DB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 D_PRJ_DB=$(realpath "${D_CREATE_DB}/../")
-CNT_PG_DB='dagster_db'
-VOL_PG_DB='vol_dagster_db'
-readonly F_CREATE_DB D_CREATE_DB D_PRJ_DB CNT_PG_DB
 
 source "${D_CREATE_DB}/fn.podman.sh"
-if [ -f "${D_PRJ_DB}/.podman.secrets.sh" ]; then
-    source "${D_PRJ_DB}/.podman.secrets.sh" # You need to create this file first
-else
-    make_podman_secrets() {
-        echo "The .podman.secrets.sh is not set."
-    }
-fi
+
+use_secrets_maker() {
+    if [ -f "${D_PRJ_DB}/.podman.secrets.sh" ]; then
+        source "${D_PRJ_DB}/.podman.secrets.sh"
+    else
+        make_podman_secrets() {
+            echo "The .podman.secrets.sh is not used."
+        }
+    fi
+}
 
 # Checks if dagster db already exists
 dagster_db_exists() {
-    podman exec --user postgres "${CNT_PG_DB}" psql -U postgres -tAc \
+    local cnt_name=$1
+    podman exec --user postgres "${cnt_name}" psql -U postgres -tAc \
         "SELECT 1 FROM pg_database WHERE datname = 'dagster'" 2>/dev/null | \
         grep -q 1
 }
 
 # Prepare SQL code
 prepare_and_run_sql_code() {
-    local db_name schema_dagster schema_storage usr_dagster usr_storage f_tpl_sql f_run_sql
+    local db_name schema_dagster schema_storage usr_dagster usr_storage f_tpl_sql f_run_sql s_px cnt_name
+    cnt_name=$1
+    s_px="${DGS_SEC_PRX:-s_dgs_}"
     echo "Preparing SQL code..."
-    db_name=$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dgs_pg_dbn)
-    schema_dagster=$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dgs_pg_sch)
-    schema_storage=$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dbs_pg_sch)
-    usr_dagster=$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dgs_pg_usr)
-    usr_storage=$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dbs_pg_usr)
+    db_name=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_dbn")
+    schema_dagster=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_sch")
+    schema_storage=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_st_sch")
+    usr_dagster=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_usr")
+    usr_storage=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_st_usr")
     f_tpl_sql="${D_CREATE_DB}/sql/tpl.dagster.sql"
     f_run_sql="${D_CREATE_DB}/sql/run.dagster.sql"
     cp "${f_tpl_sql}" "${f_run_sql}"
@@ -49,69 +51,81 @@ prepare_and_run_sql_code() {
     perl -i -pe "s/\busr_storage\b/${usr_storage}/g" "${f_run_sql}"
     # Copy and execute command
     echo "Executing SQL code..."
-    podman cp "${f_run_sql}" "${CNT_PG_DB}":/tmp/run.dagster.sql
-    podman exec --user root "${CNT_PG_DB}" psql -U postgres -d "${db_name}" -f /tmp/run.dagster.sql
+    podman cp "${f_run_sql}" "${cnt_name}":/tmp/run.dagster.sql
+    podman exec --user root "${cnt_name}" psql -U postgres -d "${db_name}" -f /tmp/run.dagster.sql
 }
 
 # Creates database for dagster
 create_db_for_dagster() {
-    local db_name schema_dagster schema_storage usr_dagster usr_storage
-    if ! dagster_db_exists; then
-        echo "Creating database for dagster..."
+    local db_name schema_dagster schema_storage usr_dagster usr_storage cnt_name s_px
+    cnt_name=$1
+    s_px="${DGS_SEC_PRX:-s_dgs_}"
+    if ! dagster_db_exists "${cnt_name}"; then
+        echo "Creating database for Dagster..."
         # Configuration
-        db_name=$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dgs_pg_dbn)
-        schema_dagster=$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dgs_pg_sch)
-        schema_storage=$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dbs_pg_sch)
-        usr_dagster=$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dgs_pg_usr)
-        usr_storage=$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dbs_pg_usr)
+        db_name=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_dbn")
+        schema_dagster=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_sch")
+        schema_storage=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_sch")
+        usr_dagster=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_usr")
+        usr_storage=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_usr")
         # Create a database
-        podman exec --user root "${CNT_PG_DB}" createdb -U postgres "${db_name}" 2>/dev/null || true
+        podman exec --user root "${cnt_name}" createdb -U postgres "${db_name}" 2>/dev/null || true
         # Execute code on server
-        prepare_and_run_sql_code
+        prepare_and_run_sql_code "${cnt_name}"
         # Update users
-        podman exec --user root "${CNT_PG_DB}" psql -U postgres -d postgres \
-            -c "ALTER ROLE ${usr_dagster} WITH PASSWORD '$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dgs_pg_psw)';" || true
-        podman exec --user root "${CNT_PG_DB}" psql -U postgres -d postgres \
-            -c "ALTER ROLE ${usr_storage} WITH PASSWORD '$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dbs_pg_psw)';" || true
+        podman exec --user root "${cnt_name}" psql -U postgres -d postgres \
+            -c "ALTER ROLE ${usr_dagster} WITH PASSWORD '$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_psw")';" || true
+        podman exec --user root "${cnt_name}" psql -U postgres -d postgres \
+            -c "ALTER ROLE ${usr_storage} WITH PASSWORD '$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_psw")';" || true
     fi
 }
 
 # Create volume
 create_volume_dagster_db() {
-    if ! podman_v_exists "${VOL_PG_DB}"; then
-        podman volume create "${VOL_PG_DB}"
+    local vol_name=$1
+    if ! podman_v_exists "${vol_name}"; then
+        podman volume create "${vol_name}"
     fi
 }
 
 # Creates PostgreSQL server
 create_server_postgres() {
-    local s_port
-    if ! podman_cnt_exists "${CNT_PG_DB}"; then
-        create_volume_dagster_db
-        s_port=$(podman secret inspect --showsecret --format '{{.SecretData}}' s_dgs_pg_prt)
-        echo "Creating ${CNT_PG_DB}..."
-        podman create --name "${CNT_PG_DB}" \
-            --secret s_dgs_postgres,type=env,target=POSTGRES_PASSWORD \
+    local cnt_name vol_name img_path
+    cnt_name=$1 vol_name=$2 img_path=$3
+    if ! podman_cnt_exists "${cnt_name}"; then
+        local s_port s_px
+        s_px="${DGS_SEC_PRX:-s_dgs_}"
+        create_volume_dagster_db "${vol_name}"
+        s_port=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_prt")
+        echo "Creating ${cnt_name}..."
+        podman create --name "${cnt_name}" \
+            --secret "${s_px}postgres",type=env,target=POSTGRES_PASSWORD \
             -p "${s_port}":5432 \
-            docker.io/library/postgres:latest
-        #-v "${VOL_PG_DB}":/var/lib/postgresql/data \
+            "${img_path}"
+        #-v "${vol_name}":/var/lib/postgresql/data \
     fi
 }
 
 # Starts Postgres DB server
 start_server_postgres() {
-    if ! podman_cnt_running "${CNT_PG_DB}"; then
-        echo "Starting ${CNT_PG_DB}..."
-        podman start "${CNT_PG_DB}"
+    local cnt_name=$1
+    if ! podman_cnt_running "${cnt_name}"; then
+        echo "Starting ${cnt_name}..."
+        podman start "${cnt_name}"
         sleep 6
-        create_db_for_dagster
+        create_db_for_dagster "${cnt_name}"
     fi
 }
 
 create_and_start_server_postgres() {
-    make_podman_secrets
-    create_server_postgres
-    start_server_postgres
+    local cnt_name vol_name img_path
+    cnt_name=$1 vol_name=$2 img_path=$3
+    create_server_postgres "${cnt_name}" "${vol_name}" "${img_path}"
+    start_server_postgres "${cnt_name}"
 }
 
-create_and_start_server_postgres
+if [[ $# -eq 3 ]]; then
+    use_secrets_maker
+    make_podman_secrets
+    create_and_start_server_postgres "$1" "$2" "$3"
+fi
