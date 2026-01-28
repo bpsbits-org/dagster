@@ -1,0 +1,4 @@
+# dagster_extender
+comment = 'Dagster Extender'
+default_version = '1.0'
+relocatable = false

@@ -1,14 +1,18 @@
 # IDE's
-/.idea/*
-!/.idea/runConfigurations
-!/.idea/runConfigurations/*
-!/.idea/httpRequests
-!/.idea/httpRequests/*
-/.vscode
+.idea/*
+!.idea/dagster-servers.iml
+!.idea/httpRequests
+!.idea/httpRequests/*
+!.idea/misc.xml
+!.idea/modules.xml
+!.idea/runConfigurations
+!.idea/runConfigurations/
+.vscode/*
 
 # Project spceific
 /.podman.secrets.sh
 /.storage-conf.yaml
+/.tmp.icecat.yaml
 .venv/
 .scripts/
 _scripts/tmp.sh
