@@ -41,6 +41,16 @@ podman_cnt_running() {
     podman container inspect --format '{{.State.Running}}' "$1" 2>/dev/null | grep -q true
 }
 
+podman_cnt_stop() {
+    local name=$1
+    if ! podman_cnt_running "${name}"; then
+        echo "Container '${name}' is not running."
+    else
+        echo "Stopping container '${name}'..."
+        podman stop "${name}"
+    fi
+}
+
 podman_s_exists() {
     podman secret exists "$1" >/dev/null 2>&1
 }
@@ -75,4 +85,33 @@ podman_s_save() {
         echo "Creating secret '$name'..."
         printf '%s' "$value" | podman secret create "$name" -
     fi
+}
+
+podman_s_read() {
+    local name=$1
+    if podman_s_exists "${name}"; then
+        podman secret inspect --showsecret --format '{{.SecretData}}' "${name}"
+    else
+        echo ""
+    fi
+}
+
+podman_print_acc_command() {
+    local name=$1
+    echo -e "\nUse command below to access container"
+    echo -e "\t podman exec -it ${name} /bin/bash\n"
+}
+
+podman_print_env_vars() {
+    local name=$1
+    if ! podman_cnt_exists "${name}"; then
+        echo "Container '${name}' does not exist"
+        return 1
+    fi
+    if ! podman_cnt_running "${name}"; then
+        echo "Container '${name}' does not run"
+        return 1
+    fi
+    echo "ENV vars in: '${name}'"
+    podman exec "${name}" env | sort
 }

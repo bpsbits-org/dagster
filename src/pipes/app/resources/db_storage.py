@@ -9,7 +9,7 @@ _lock_db_storage_cnf = Lock()
 
 
 @resource(description="The configuration of storage database.")
-def db_storage(context):
+def db_storage(context) -> PgStorageRs:
     global _cache_db_storage_cnf
     if _cache_db_storage_cnf is None:
         with _lock_db_storage_cnf:

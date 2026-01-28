@@ -27,6 +27,43 @@ dagster_db_exists() {
         grep -q 1
 }
 
+copy_extension_dagster() {
+    local cnt_name
+    cnt_name=$1
+    podman exec "${cnt_name}" rm -rf /tmp/dagster_extender
+    podman cp "${D_PRJ_DB}/_scripts/sql/dagster_extender" "${cnt_name}":/tmp/dagster_extender
+    podman exec -it "${cnt_name}" bash /tmp/dagster_extender/install.sh
+    podman exec "${cnt_name}" rm -rf /tmp/dagster_extender
+}
+
+copy_extension_icecat() {
+    local cnt_name
+    cnt_name=$1
+    podman exec "${cnt_name}" rm -rf /tmp/icecat
+    podman cp "${D_PRJ_DB}/_scripts/sql/icecat" "${cnt_name}":/tmp/icecat
+    podman exec -it "${cnt_name}" bash /tmp/icecat/install.sh
+    podman exec "${cnt_name}" rm -rf /tmp/icecat
+}
+
+save_storage_db_conn() {
+    local cnt_name s_px db_dagster sc_dagster json srv prt dbn sch usr psw
+    cnt_name=$1
+    s_px="${DGS_SEC_PRX:-s_dgs_}"
+    db_dagster=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_dbn")
+    sc_dagster=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_sch")
+    # podman_s_save "s_dgs_pg_sch" "dagster" # Name of Dagster DB
+    srv=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_st_srv")
+    prt=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_st_prt")
+    dbn=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_st_dbn")
+    sch=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_st_sch")
+    usr=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_st_usr")
+    psw=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_st_psw")
+    json="{\"host\":\"${srv}\",\"port\":\"${prt}\",\"database\":\"${dbn}\",\"db_schema\":\"${sch}\",\"user\":\"${usr}\",\"password\":\"${psw}\"}"
+    echo -e "Saving 'db_storage' configuration...\n"
+    podman exec --user root "${cnt_name}" psql -U postgres -d "${db_dagster}" \
+        -c "select length(${sc_dagster}.set_user_conf('db_storage'::varchar, '${json}'::jsonb)::varchar) > 0 as conf_saved;"
+}
+
 # Prepare SQL code
 prepare_and_run_sql_code() {
     local db_name schema_dagster schema_storage usr_dagster usr_storage f_tpl_sql f_run_sql s_px cnt_name
@@ -57,17 +94,15 @@ prepare_and_run_sql_code() {
 
 # Creates database for dagster
 create_db_for_dagster() {
-    local db_name schema_dagster schema_storage usr_dagster usr_storage cnt_name s_px
+    local db_name usr_dagster usr_storage cnt_name s_px
     cnt_name=$1
     s_px="${DGS_SEC_PRX:-s_dgs_}"
     if ! dagster_db_exists "${cnt_name}"; then
         echo "Creating database for Dagster..."
         # Configuration
         db_name=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_dbn")
-        schema_dagster=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_sch")
-        schema_storage=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_sch")
         usr_dagster=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_usr")
-        usr_storage=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_usr")
+        usr_storage=$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_st_usr")
         # Create a database
         podman exec --user root "${cnt_name}" createdb -U postgres "${db_name}" 2>/dev/null || true
         # Execute code on server
@@ -76,7 +111,9 @@ create_db_for_dagster() {
         podman exec --user root "${cnt_name}" psql -U postgres -d postgres \
             -c "ALTER ROLE ${usr_dagster} WITH PASSWORD '$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_psw")';" || true
         podman exec --user root "${cnt_name}" psql -U postgres -d postgres \
-            -c "ALTER ROLE ${usr_storage} WITH PASSWORD '$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_psw")';" || true
+            -c "ALTER ROLE ${usr_storage} WITH PASSWORD '$(podman secret inspect --showsecret --format '{{.SecretData}}' "${s_px}pg_st_psw")';" || true
+        # Save connection configuration for db_storage
+        save_storage_db_conn "${cnt_name}"
     fi
 }
 
@@ -112,7 +149,12 @@ start_server_postgres() {
     if ! podman_cnt_running "${cnt_name}"; then
         echo "Starting ${cnt_name}..."
         podman start "${cnt_name}"
+        echo -e "\tWaiting for server to launch..."
         sleep 6
+        # Copy extensions
+        copy_extension_dagster "${cnt_name}"
+        copy_extension_icecat "${cnt_name}"
+        # Create a database and configure
         create_db_for_dagster "${cnt_name}"
     fi
 }

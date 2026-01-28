@@ -1,71 +1,50 @@
+-- Check PostgreSQL version
 select version();
 
--- User configuration
-create role dbu_dagster with login;
-create role dbu_storage with login;
-
+-- Create main schemas if needed
 create schema if not exists dagster;
 create schema if not exists storage;
 
+-- Add a search path to a database
+alter database dagster set search_path to public, dagster, storage;
+
+-- Create roles
+create role dbu_dagster with login;
+create role dbu_storage with login;
+
+-- Dagster role configuration
 grant all on database dagster to dbu_dagster;
 alter schema dagster owner to dbu_dagster;
 grant all on schema dagster to dbu_dagster;
+grant execute on all functions in schema dagster to dbu_dagster;
 
+-- Storage role configuration
 grant connect on database dagster to dbu_storage;
 grant usage on schema storage to dbu_storage;
+grant execute on all functions in schema storage to dbu_storage;
 
--- Table for user configurations
-create table if not exists dagster.user_configurations
-(
-    cid varchar(36) default gen_random_uuid()::varchar not null
-        constraint pk_cid_user_configurations
-            primary key,
-    cnf jsonb       default '{}'::jsonb                not null
-);
+-- Install extensions dagster_extender in dagster schema
+do
+$$
+    begin
+        if exists (select 1 from pg_available_extensions where name = 'dagster_extender') then
+            create extension if not exists dagster_extender schema dagster;
+            raise notice 'Extension "dagster_extender" is installed.';
+        else
+            raise notice 'Extension "dagster_extender" is not available.';
+        end if;
+    end
+$$;
 
-comment on table dagster.user_configurations is 'Misc user configurations';
-
--- Function for retrieving user configuration
-create or replace function dagster.get_user_conf(key varchar(36))
-    returns jsonb
-    security definer
-    stable
-    language sql as
-$func$
-select coalesce((select cnf from dagster.user_configurations where cid = trim(key)), '{}'::jsonb);
-$func$;
-
-comment on function dagster.get_user_conf
-    is 'Returns specified configuration';
-
-alter function dagster.dagster.get_user_conf(varchar) owner to postgres;
-
-grant execute on function dagster.get_user_conf(varchar) to dbu_dagster;
-
--- Function for setting user configuration
-create or replace function dagster.set_user_conf(in_key varchar(36), in_value jsonb)
-    returns jsonb
-    security definer
-    language plpgsql as
-$func$
-begin
-    if coalesce(trim(in_key), '') = '' then
-        raise exception 'Key is not provided';
-    end if;
-    if (jsonb_typeof(in_value) = 'object') = false then
-        raise exception 'Value should be JSON object';
-    end if;
-    insert into dagster.user_configurations (cid, cnf)
-    values (in_key, in_value)
-    on conflict (cid) do update
-        set cnf = excluded.cnf;
-    return in_value;
-end;
-$func$;
-
-comment on function dagster.set_user_conf
-    is 'Sets specified configuration';
-
-alter function dagster.set_user_conf(varchar, jsonb) owner to postgres;
-
-grant execute on function dagster.set_user_conf(varchar, jsonb) to dbu_dagster;
+-- Install extensions dagster_extender in storage schema
+do
+$$
+    begin
+        if exists (select 1 from pg_available_extensions where name = 'icecat') then
+            create extension if not exists icecat schema storage;
+            raise notice 'Extension "icecat" is installed.';
+        else
+            raise notice 'Extension "icecat" is not available.';
+        end if;
+    end
+$$;
