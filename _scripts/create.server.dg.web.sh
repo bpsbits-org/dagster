@@ -20,10 +20,11 @@ create_dg_srv_web() {
         echo "Creating container of Dagster Web Server '${name_cnt}'..."
         podman create --name "${name_cnt}" \
             -p "${s_port}":3000 \
-            --secret "${s_px}pg_dbn",type=env,target=DGS_PG_DBN \
-            --secret "${s_px}pg_prt",type=env,target=DGS_PG_PRT \
-            --secret "${s_px}pg_psw",type=env,target=DGS_PG_PSW \
             --secret "${s_px}pg_srv",type=env,target=DGS_PG_SRV \
+            --secret "${s_px}pg_prt",type=env,target=DGS_PG_PRT \
+            --secret "${s_px}pg_dbn",type=env,target=DGS_PG_DBN \
+            --secret "${s_px}pg_sch",type=env,target=DGS_PG_SCH \
+            --secret "${s_px}pg_psw",type=env,target=DGS_PG_PSW \
             --secret "${s_px}pg_usr",type=env,target=DGS_PG_USR \
             --secret "${s_px}pl_prt",type=env,target=DGS_CODE_PORT \
             "${name_img}"
@@ -47,5 +48,5 @@ start_cnt_web() {
 
 open_dagster_ui() {
     local s_port=$1
-    open "http://localhost:${s_port}"
+    open "http://localhost:${s_port}/"
 }

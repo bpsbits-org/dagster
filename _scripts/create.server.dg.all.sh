@@ -65,12 +65,9 @@ create_and_start() {
 }
 
 chek_env_vars() {
-    echo "Env vars in: '${DG_SRV_PIPES}'"
-    podman exec "${DG_SRV_PIPES}" env | sort
-    echo "Env vars in: '${DG_SRV_DAEMON}'"
-    podman exec "${DG_SRV_DAEMON}" env | sort
-    echo "Env vars in: '${DG_SRV_WEB}'"
-    podman exec "${DG_SRV_WEB}" env | sort
+    podman_print_env_vars "${DG_SRV_PIPES}"
+    podman_print_env_vars "${DG_SRV_DAEMON}"
+    podman_print_env_vars "${DG_SRV_WEB}"
 }
 
 open_dgs_ui() {

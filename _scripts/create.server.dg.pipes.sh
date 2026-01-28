@@ -26,11 +26,12 @@ create_dg_srv_pipes() {
             -p "${s_port}":4000 \
             -v "${name_vol_app}":/opt/dagster/app \
             -v "${name_vol_share}":/data/share \
-            --secret "${s_px}pg_dbn",type=env,target=DGS_PG_DBN \
-            --secret "${s_px}pg_prt",type=env,target=DGS_PG_PRT \
-            --secret "${s_px}pg_psw",type=env,target=DGS_PG_PSW \
             --secret "${s_px}pg_srv",type=env,target=DGS_PG_SRV \
+            --secret "${s_px}pg_prt",type=env,target=DGS_PG_PRT \
+            --secret "${s_px}pg_dbn",type=env,target=DGS_PG_DBN \
+            --secret "${s_px}pg_sch",type=env,target=DGS_PG_SCH \
             --secret "${s_px}pg_usr",type=env,target=DGS_PG_USR \
+            --secret "${s_px}pg_psw",type=env,target=DGS_PG_PSW \
             "${name_img}"
     else
         echo "Container of Dagster Pipes Server '${name_cnt}' already exists."
