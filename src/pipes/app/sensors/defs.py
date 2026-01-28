@@ -1,5 +1,4 @@
 # app/sensors/defs.py
-from dagster import load_assets_from_package_module
-import sensors
+from .auto_load_sensors import auto_load_sensors
 
-ALL_SENSORS = load_assets_from_package_module(sensors)
+ALL_SENSORS = auto_load_sensors()
