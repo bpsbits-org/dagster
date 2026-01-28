@@ -1,5 +1,4 @@
 # app/schedules/defs.py
-from dagster import load_assets_from_package_module
-import schedules
+from .auto_load_sch import auto_load_sch
 
-ALL_SCHEDULES = load_assets_from_package_module(schedules)
+ALL_SCHEDULES = auto_load_sch()
