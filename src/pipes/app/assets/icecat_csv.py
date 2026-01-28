@@ -1,11 +1,12 @@
 # app/assets/icecat_csv.py
 from pathlib import Path
-from dagster import asset, get_dagster_logger, MetadataValue
+from dagster import asset, get_dagster_logger
 from .icecat.IceCatCsv import IceCatCsv
 
 
 @asset(
     group_name="icecat",
+    tags={"group": "icecat"},
     description="Returns IceCat CSV file. If missing tries to download it.",
     required_resource_keys={"icecat_creds"},
 )

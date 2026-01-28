@@ -1,5 +1,6 @@
-# app/jobs/parse_icecat_csv.py
+# app/jobs/icecat/parse_icecat_csv_into_files.py
 import shutil
+from typing import Optional
 
 from dagster import job, op, get_dagster_logger, Output, Config
 from pydantic import Field
@@ -8,6 +9,8 @@ import csv
 import json
 
 from assets.icecat_csv import icecat_csv
+from jobs.icecat.count_rows_in_file import count_rows_in_file
+from jobs.icecat.get_prod_id import get_prod_id
 
 
 class ParserConf(Config):
@@ -22,28 +25,44 @@ class ParserConf(Config):
     )
 
 
-def count_rows_in_file(csv_path: str) -> int:
-    logger = get_dagster_logger()
-    try:
-        with open(csv_path, "rb") as f:
-            total_lines = sum(1 for _ in f)
-            rows_total = total_lines - 1  # Subtract 1 for the header
-        logger.info(f"Total rows found: {rows_total:,}")
-    except Exception as e:
-        logger.error(f"Failed during row count: {e}")
-        raise
-    if rows_total <= 0:
-        logger.warning("Empty file or only header detected")
-    return rows_total
+class ICToFilesMeta:
+    """Metadata for the CSV file parsing job."""
+    output_dir: Optional[str] = None
+    rows_found: int = 0
+    rows_processed: int = 0
+    bad_rows: int = 0
+    files_count: int = 0
+    example_file: Optional[str] = "None"
+    id_column: str = "product_id"
+    prg_interval: int = 200_000
 
+    def to_meta(self):
+        return Output(
+            value=f"Created {self.files_count:,} JSON files",
+            metadata={
+                "output_dir": self.output_dir,
+                "rows_found": self.rows_found,
+                "rows_processed": self.rows_processed,
+                "rows_skipped": self.bad_rows,
+                "files_generated": self.files_count,
+                "example_file": self.example_file,
+                "id_column": self.id_column,
+                "progress_interval": self.prg_interval,
+            }
+        )
 
-def get_prod_id(row: dict, row_id: int) -> str:
-    logger = get_dagster_logger()
-    prod_id = row.get("product_id", "").strip()
-    if not prod_id:
-        prod_id = f"row_{row_id:07d}"
-        logger.warning(f"Empty product_id in row {row_id} → using {prod_id}")
-    return prod_id
+    @staticmethod
+    def descriptions():
+        return {
+            "output_dir": "Directory where JSON files will be written",
+            "rows_found": "Total number of rows found in the CSV file",
+            "rows_processed": "Total number of rows processed from the CSV file",
+            "rows_skipped": "Number of rows skipped due to incorrect number of fields",
+            "files_generated": "Number of JSON files generated",
+            "example_file": "Path to an example JSON file generated",
+            "id_column": "Name of the column used as product ID",
+            "progress_interval": "Number of rows processed between progress reports",
+        }
 
 
 def make_output_dir(config: ParserConf) -> Path:
@@ -58,19 +77,15 @@ def make_output_dir(config: ParserConf) -> Path:
 
 
 @op(description="Parses given IceCat CSV file → one JSON per product using product_id")
-def parse_csv_to_json(config: ParserConf, csv_path: str):
+def parse_csv_to_json(config: ParserConf, csv_path: str) -> Output:
     """
     Parses large IceCat CSV → one JSON per product.
     Two-pass version: first counts total rows, then processes with percentage progress.
     Uses csv.reader to avoid silent row dropping on bad quoting.
     """
     logger = get_dagster_logger()
-    files_count = 0
-    rows_processed = 0
-    bad_rows = 0
-    example_file = None
-    prg_interval = 200_000
-    output_dir = config.output_dir
+    mt = ICToFilesMeta()
+    mt.output_dir = config.output_dir
     path_output = make_output_dir(config=config)
 
     # 2. Count total rows (physical lines - header)
@@ -81,7 +96,7 @@ def parse_csv_to_json(config: ParserConf, csv_path: str):
 
     # 3. Process data with progress reporting
     logger.info(f"Starting processing of {rows_found:,} rows...")
-    logger.info(f"Storing JSON files into: {output_dir}")
+    logger.info(f"Storing JSON files into: {mt.output_dir}")
 
     with open(csv_path, "r", encoding="utf-8", errors="replace", newline="") as f:
         reader = csv.reader(f, delimiter="\t", quoting=csv.QUOTE_NONE)
@@ -95,10 +110,10 @@ def parse_csv_to_json(config: ParserConf, csv_path: str):
 
         logger.info(f"Processed {0:5.1f}%  |  {0:,} rows")
         for i, row_list in enumerate(reader, 2):  # line numbers starting from 2 (after header)
-            rows_processed += 1
+            mt.rows_processed += 1
 
             if len(row_list) != expected_cols:
-                bad_rows += 1
+                mt.bad_rows += 1
                 continue  # skip broken rows
 
             row = dict(zip(headers, row_list))
@@ -112,39 +127,30 @@ def parse_csv_to_json(config: ParserConf, csv_path: str):
             try:
                 with open(file_path, "w", encoding="utf-8") as jf:
                     json.dump(row, jf, ensure_ascii=False, indent=2)
-                files_count += 1
-                if example_file is None:
-                    example_file = str(file_path)
+                mt.files_count += 1
+                if mt.example_file is None:
+                    mt.example_file = str(file_path)
 
                 # Progress reporting
-                if rows_processed % prg_interval == 0 or rows_processed == rows_found:
-                    percent = (rows_processed / rows_found) * 100
-                    logger.info(f"Processed {percent:5.1f}%  |  {rows_processed:,} rows")
+                if mt.rows_processed % mt.prg_interval == 0 or mt.rows_processed == rows_found:
+                    percent = (mt.rows_processed / rows_found) * 100
+                    logger.info(f"Processed {percent:5.1f}%  |  {mt.rows_processed:,} rows")
 
             except Exception as e:
                 logger.warning(f"Row {i} ({safe_id}) failed: {e}")
                 continue
 
-    logger.info(f"Completed! Created {files_count:,} JSON files in {output_dir}")
-    if bad_rows > 0:
-        logger.info(f"Skipped {bad_rows:,} rows due to incorrect number of fields")
+    logger.info(f"Completed! Created {mt.files_count:,} JSON files in {mt.output_dir}")
+    if mt.bad_rows > 0:
+        logger.info(f"Skipped {mt.bad_rows:,} rows due to incorrect number of fields")
 
-    return Output(
-        value=f"Created {files_count:,} JSON files",
-        metadata={
-            "output_dir": output_dir,
-            "rows_found": rows_found,
-            "rows_processed": rows_processed,
-            "rows_skipped": bad_rows,
-            "files_generated": files_count,
-            "example_file": example_file,
-            "id_column": "product_id",
-            "progress_interval": prg_interval,
-        }
-    )
+    return mt.to_meta()
 
 
-@job(description="Parses IceCat CSV file into JSON files.")
+@job(description="Parses IceCat CSV file into JSON files.",
+     tags={"group": "icecat"},
+     metadata=ICToFilesMeta.descriptions(),
+     )
 def parse_icecat_csv_into_files():
     """Parses IceCat CSV file into JSON files."""
     logger = get_dagster_logger()
